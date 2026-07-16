@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"io"
 	"main/config"
+	"main/loger"
 	"net/http"
 	"os"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 var list struct {
@@ -23,21 +26,24 @@ var list struct {
 	} `json:"data"`
 }
 
-func DownloadEmoteList() {
+func DownloadEmoteList() bool {
 	baseurl := "https://api.bilibili.com/x/emote/setting/panel?business=reply"
 	client := http.Client{}
 	req, err := http.NewRequest("GET", baseurl, nil)
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Download]无法创建请求", zap.Error(err))
+		return false
 	}
 	req.Header.Set("Cookie", "SESSDATA="+config.Cfg.BiliBili.SESSDATA)
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Download]启动请求失败", zap.Error(err))
+		return false
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Download]读取响应体失败", zap.Error(err))
+		return true
 	}
 	json.Unmarshal(data, &list)
 	for i, a := range list.Data.Packages {
@@ -47,9 +53,18 @@ func DownloadEmoteList() {
 	}
 	file, err := json.Marshal(list)
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Download]序列化Json失败", zap.Error(err))
+		return false
+	}
+	l := len(list.Data.Packages)
+	loger.Loger.Info("[Download]下载完毕", zap.Int("数量", l))
+	if l == 0 {
+		loger.Loger.Error("[Download]下载后数量为0，请检查登陆凭证")
+		return false
 	}
 	os.WriteFile("resp.json", file, 0775)
+
+	return true
 }
 func geturl(url string) (string, int) {
 

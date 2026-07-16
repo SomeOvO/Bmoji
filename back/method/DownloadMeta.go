@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"io"
 	"main/config"
+	"main/loger"
 	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
-func DownloadEmoteMeta() {
+func DownloadEmoteMeta() bool {
 	var download []struct {
 		ID     int    `json:"id"`
 		Text   string `json:"text"`
@@ -28,14 +31,19 @@ func DownloadEmoteMeta() {
 	}
 	wd, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Meta]获取工作目录失败", zap.Error(err))
+		return false
 	}
 	file, err := os.ReadFile(wd + "/resp.json")
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Meta]读取列表文件失败", zap.Error(err))
+		return false
 	}
-	json.Unmarshal(file, &list)
-
+	err = json.Unmarshal(file, &list)
+	if err != nil {
+		loger.Loger.Error("[Meta]反序列化失败", zap.Error(err))
+		return false
+	}
 	//获取所有id字符串
 	var idlist []string
 	for _, v := range list.Data.Packages {
@@ -81,19 +89,27 @@ func DownloadEmoteMeta() {
 		baseurl := "https://api.bilibili.com/x/emote/package"
 		var str strings.Builder
 		for _, val := range v {
-			str.WriteString(val + ",")
+			str.WriteString(val)
+			str.WriteString(",")
 		}
 		resq, err := http.NewRequest("GET", baseurl+"?business=reply&ids="+str.String(), nil)
 		resq.Header.Set("Cookie", "SESSDATA="+config.Cfg.BiliBili.SESSDATA)
 		resp, err := client.Do(resq)
 		if err != nil {
-			panic(err)
+			loger.Loger.Error("[Meta]无法发起请求", zap.Error(err))
+			return false
 		}
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
-			panic(err)
+			loger.Loger.Error("[Meta]读取响应体失败", zap.Error(err))
+			return false
 		}
-		json.Unmarshal(data, &metalist)
+		err = json.Unmarshal(data, &metalist)
+
+		if err != nil {
+			loger.Loger.Error("[Meta]反序列化失败", zap.Error(err))
+			return false
+		}
 
 		//替换http为https，否则前端下载报错
 		for _, val := range metalist.Data.Package {
@@ -103,14 +119,21 @@ func DownloadEmoteMeta() {
 			}
 			download = append(download, val)
 		}
-		fmt.Println(i+1, len(ids))
-
+		fmt.Printf("\r%v/%v", i, len(ids))
 	}
+	fmt.Println()
 	file, err = json.Marshal(download)
 	if err != nil {
-		panic(err)
+		loger.Loger.Error("[Meta]无法序列化", zap.Error(err))
+		return false
 	}
 	//写入
-	os.WriteFile("download.json", file, 0775)
+	err = os.WriteFile("download.json", file, 0775)
+	if err != nil {
+		loger.Loger.Error("[Meta]无法写入文件", zap.Error(err))
+		return false
+	}
+
+	return true
 
 }

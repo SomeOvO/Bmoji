@@ -2,6 +2,7 @@ package main
 
 import (
 	"main/config"
+	"main/loger"
 	"main/method"
 	"main/router"
 	"os"
@@ -9,15 +10,20 @@ import (
 
 func main() {
 	config.GetConfig()
+	loger.InitLog()
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "meta":
-			method.DownloadEmoteMeta()
+			if !method.DownloadEmoteMeta() {
+				loger.Loger.Fatal("[Meta]下载失败")
+			}
 		case "list":
-			method.DownloadEmoteList()
+			if !method.DownloadEmoteList() {
+				loger.Loger.Fatal("[List]下载失败")
+			}
 		}
 		return
 	}
+	go method.AutoUpdate()
 	router.StartUp()
-
 }
