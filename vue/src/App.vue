@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 const load = ref(false)
-const baseurl = "https://b.sakurasen.cn/api/bmoji/v1/emote/"
+const baseurl = "https://api.3mua.cn/api/bmoji/v1/emote/"
 type listobj = {
   "id": number,
   "text": string,

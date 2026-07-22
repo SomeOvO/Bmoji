@@ -32,7 +32,7 @@ var metalist []struct {
 	} `json:"emote"`
 }
 
-var metalistByte []byte
+var MetalistByte []byte
 
 func findlocal(c *gin.Context) {
 	id, err := strconv.Atoi(c.Query("id"))
@@ -43,14 +43,14 @@ func findlocal(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	if metalistByte == nil {
+	if MetalistByte == nil {
 		fmt.Println("nil")
 		file, err := os.ReadFile(wd + "/download.json")
 		if err != nil {
 			panic(err)
 		}
-		metalistByte = file
-		json.Unmarshal(metalistByte, &metalist)
+		MetalistByte = file
+		json.Unmarshal(MetalistByte, &metalist)
 	}
 
 	for _, v := range metalist {

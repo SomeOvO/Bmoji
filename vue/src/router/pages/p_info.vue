@@ -18,11 +18,11 @@
   }
   const id = window.location.search.split("?")[1]
   const info = ref<infoobj>()
-  const baseurl = "https://b.sakurasen.cn/api/bmoji/v1/emote/"
+  const baseurl = "https://api.3mua.cn/api/bmoji/v1/emote/"
   onMounted(() => {
     fetch(baseurl + "info?id=" + id).then((d) => d.json()).then((d) => {
       info.value = d
-      info.value!.emote.map((e) => {
+      info.value!.emote.map((e: { [x: string]: string }) => {
         if (e["gif_url"] !== "") {
           hasgif.value = true
         }
@@ -73,7 +73,7 @@
     const zip = new JSZip
     switch (type) {
       case 1:
-        await Promise.all(info.value!.emote.map(async (e) => {
+        await Promise.all(info.value!.emote.map(async (e: { url: string | URL | Request; text: string }) => {
           const resp = await fetch(e.url, {
             method: "GET",
             referrerPolicy: "no-referrer"
@@ -86,7 +86,7 @@
         saveAs(content, info.value?.text)
         break;
       case 2:
-        await Promise.all(info.value!.emote.map(async (e) => {
+        await Promise.all(info.value!.emote.map(async (e: { gif_url: string | URL | Request; url: string | URL | Request; text: string }) => {
           const resp = await fetch((() => {
             if (e.gif_url !== "") {
               return e.gif_url
@@ -117,7 +117,7 @@
           "icon":"",
           "items":([] as string[])
         }
-        await Promise.all(info.value!.emote.map(async (e) => {
+        await Promise.all(info.value!.emote.map(async (e: { gif_url: string | URL | Request; url: string | URL | Request; text: string }) => {
           const resp = await fetch((() => {
             if (e.gif_url !== "") {
               return e.gif_url

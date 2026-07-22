@@ -15,7 +15,7 @@ func GetRemoteList(c *gin.Context) {
 	}
 }
 
-var list []byte
+var List []byte
 
 func local(c *gin.Context) {
 	wd, err := os.Getwd()
@@ -23,13 +23,13 @@ func local(c *gin.Context) {
 		c.JSON(502, Send(502, "获取目录失败"))
 		return
 	}
-	if list != nil {
-		c.Data(200, "application/json", list)
+	if List != nil {
+		c.Data(200, "application/json", List)
 		fmt.Println("内存已有")
 		return
 	}
 	file, err := os.ReadFile(wd + "/resp.json")
-	list = file
+	List = file
 	if err != nil {
 		c.JSON(502, Send(502, "获取目录失败"))
 		return
